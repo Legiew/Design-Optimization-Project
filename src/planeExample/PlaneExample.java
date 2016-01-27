@@ -14,11 +14,12 @@ import inf.minife.view2.Viewer2;
  * @author kl Create a three bar structure similar to the ANSYS problem...
  */
 
-public class PlaneExample {
-
+public class PlaneExample
+{
 	private Model model;
 
-	public static void main(String[] args) {
+	public static void main(String[] args)
+	{
 		Model m = new PlaneExample().getModel();
 
 		m.printStructure();
@@ -29,7 +30,8 @@ public class PlaneExample {
 		viewer.setVisible(true);
 	}
 
-	public PlaneExample() {
+	public PlaneExample()
+	{
 
 		// model
 		model = new Model();
@@ -51,8 +53,7 @@ public class PlaneExample {
 		Node n4 = model.createNode(4, 0, b, 0);
 
 		// element
-		model.createElement(1, IsoPlane.TYPE, mat, model.getRealtable(1), n1,
-				n2, n3, n4);
+		model.createElement(1, IsoPlane.TYPE, mat, model.getRealtable(1), n1, n2, n3, n4);
 
 		// forces
 		Force f = new Force();
@@ -73,7 +74,8 @@ public class PlaneExample {
 		model.getNode(4).setConstraint(c);
 	}
 
-	public Model getModel() {
+	public Model getModel()
+	{
 		return model;
 	}
 }

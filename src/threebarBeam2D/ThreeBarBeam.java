@@ -11,11 +11,12 @@ import inf.minife.view2.Viewer2;
 /**
  * @author kl Create a three bar beam structure similar to the ANSYS problem...
  */
-public class ThreeBarBeam {
-
+public class ThreeBarBeam
+{
 	private Model model;
 
-	public static void main(String[] args) {
+	public static void main(String[] args)
+	{
 		Model m = new ThreeBarBeam().getModel();
 
 		m.printStructure();
@@ -26,16 +27,18 @@ public class ThreeBarBeam {
 		viewer.setVisible(true);
 	}
 
-	public ThreeBarBeam() {
-
+	public ThreeBarBeam()
+	{
 		// model
 		model = new Model();
 
 		double E = 210000; // N/mm^2 (modulus of elasticity)
 		double rho = 7.88E-6; // kg/mm^2 (density of steel)
+
 		model.createMaterial(1, E, rho);
 
-		for (int i = 1; i <= 3; i++) {
+		for (int i = 1; i <= 3; i++)
+		{
 			CircleS c = model.createSection(i, CircleS.TYPE, Beam2D.TYPE);
 			c.setDiameter(20); // mm
 		}
@@ -43,6 +46,7 @@ public class ThreeBarBeam {
 		// nodes
 		double b = 1000.0; // mm
 		double h = 1000.0; // mm
+
 		model.createNode(1, -b, 0, 0);
 		model.createNode(2, 0, 0, 0);
 		model.createNode(3, b, 0, 0);
@@ -64,15 +68,16 @@ public class ThreeBarBeam {
 		model.getNode(3).setConstraint(constraint);
 
 		// elements
-		model.createElement(1, Beam2D.TYPE, model.getMaterial(1), model
-				.getRealtable(1), model.getNode(1), model.getNode(4));
-		model.createElement(2, Beam2D.TYPE, model.getMaterial(1), model
-				.getRealtable(2), model.getNode(2), model.getNode(4));
-		model.createElement(3, Beam2D.TYPE, model.getMaterial(1), model
-				.getRealtable(3), model.getNode(3), model.getNode(4));
+		model.createElement(1, Beam2D.TYPE, model.getMaterial(1), model.getRealtable(1), model.getNode(1),
+				model.getNode(4));
+		model.createElement(2, Beam2D.TYPE, model.getMaterial(1), model.getRealtable(2), model.getNode(2),
+				model.getNode(4));
+		model.createElement(3, Beam2D.TYPE, model.getMaterial(1), model.getRealtable(3), model.getNode(3),
+				model.getNode(4));
 	}
 
-	public Model getModel() {
+	public Model getModel()
+	{
 		return model;
 	}
 }

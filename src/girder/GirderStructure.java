@@ -9,9 +9,10 @@ import inf.minife.fe.Model;
 import inf.minife.fe.Truss2D;
 import inf.minife.view2.Viewer2;
 
-public class GirderStructure {
-
-	public static void main(String[] args) {
+public class GirderStructure
+{
+	public static void main(String[] args)
+	{
 		GirderStructure structure = new GirderStructure();
 		Viewer2 viewer = new Viewer2(structure.getModel());
 		viewer.setVisible(true);
@@ -26,29 +27,28 @@ public class GirderStructure {
 	double forceY = -50; // kN
 
 	Model model;
+
 	private HollowCircleS sectionForDiagonalMembers;
 	private HollowCircleS sectionForLowerMembers;
 	private HollowCircleS sectionForUpperMembers;
 
-	public GirderStructure() {
+	public GirderStructure()
+	{
 		model = new Model();
 
 		// material
 		Material material = model.createMaterial(1, eModulus, rho);
 
 		// sections
-		setSectionForUpperMembers((HollowCircleS) model.createSection(1,
-				HollowCircleS.TYPE, Truss2D.TYPE));
+		setSectionForUpperMembers((HollowCircleS) model.createSection(1, HollowCircleS.TYPE, Truss2D.TYPE));
 		getSectionForUpperMembers().setDiameter(getDiameter());
 		getSectionForUpperMembers().setWTK(wallThickness);
 
-		setSectionForDiagonalMembers((HollowCircleS) model.createSection(2,
-				HollowCircleS.TYPE, Truss2D.TYPE));
+		setSectionForDiagonalMembers((HollowCircleS) model.createSection(2, HollowCircleS.TYPE, Truss2D.TYPE));
 		getSectionForDiagonalMembers().setDiameter(getDiameter());
 		getSectionForDiagonalMembers().setWTK(wallThickness);
 
-		setSectionForLowerMembers((HollowCircleS) model.createSection(3,
-				HollowCircleS.TYPE, Truss2D.TYPE));
+		setSectionForLowerMembers((HollowCircleS) model.createSection(3, HollowCircleS.TYPE, Truss2D.TYPE));
 		getSectionForLowerMembers().setDiameter(getDiameter());
 		getSectionForLowerMembers().setWTK(wallThickness);
 
@@ -56,13 +56,16 @@ public class GirderStructure {
 		double dx = length / 5;
 		double x = 0;
 
-		for (int i = 0; i < 6; i++) {
+		for (int i = 0; i < 6; i++)
+		{
 			model.createNode(i + 1, x, 0, 0);
 			x += dx;
 		}
 
 		x = dx / 2.0;
-		for (int i = 0; i < 5; i++) {
+
+		for (int i = 0; i < 5; i++)
+		{
 			model.createNode(i + 7, x, getHeight(), 0);
 			x += dx;
 		}
@@ -88,80 +91,91 @@ public class GirderStructure {
 		model.getNode(6).setConstraint(constraintRight);
 
 		// elements
-		for (int i = 0; i < 5; i++) {
-			model.createElement(i + 1, Truss2D.TYPE, material,
-					getSectionForLowerMembers(), model.getNode(i + 1),
+		for (int i = 0; i < 5; i++)
+		{
+			model.createElement(i + 1, Truss2D.TYPE, material, getSectionForLowerMembers(), model.getNode(i + 1),
 					model.getNode(i + 2));
 		}
 
-		for (int i = 0; i < 4; i++) {
-			model.createElement(2 * i + 6, Truss2D.TYPE, material,
-					getSectionForDiagonalMembers(), model.getNode(i + 7),
+		for (int i = 0; i < 4; i++)
+		{
+			model.createElement(2 * i + 6, Truss2D.TYPE, material, getSectionForDiagonalMembers(), model.getNode(i + 7),
 					model.getNode(i + 2));
-			model.createElement(2 * i + 7, Truss2D.TYPE, material,
-					getSectionForDiagonalMembers(), model.getNode(i + 2),
+			model.createElement(2 * i + 7, Truss2D.TYPE, material, getSectionForDiagonalMembers(), model.getNode(i + 2),
 					model.getNode(i + 8));
 		}
 
-		model.createElement(14, Truss2D.TYPE, material,
-				getSectionForUpperMembers(), model.getNode(1), model.getNode(7));
-		for (int i = 0; i < 4; i++) {
-			model.createElement(i + 15, Truss2D.TYPE, material,
-					getSectionForUpperMembers(), model.getNode(i + 7),
+		model.createElement(14, Truss2D.TYPE, material, getSectionForUpperMembers(), model.getNode(1),
+				model.getNode(7));
+
+		for (int i = 0; i < 4; i++)
+		{
+			model.createElement(i + 15, Truss2D.TYPE, material, getSectionForUpperMembers(), model.getNode(i + 7),
 					model.getNode(i + 8));
 		}
-		model.createElement(19, Truss2D.TYPE, material,
-				getSectionForUpperMembers(), model.getNode(11),
+
+		model.createElement(19, Truss2D.TYPE, material, getSectionForUpperMembers(), model.getNode(11),
 				model.getNode(6));
 	}
 
-	public Model getModel() {
+	public Model getModel()
+	{
 		return model;
 	}
 
-	static public Model create() {
+	static public Model create()
+	{
 		GirderStructure gs = new GirderStructure();
 		return gs.model;
 	}
 
-	public void setDiameter(double diameter) {
+	public void setDiameter(double diameter)
+	{
 		this.diameter = diameter;
 	}
 
-	public double getDiameter() {
+	public double getDiameter()
+	{
 		return diameter;
 	}
 
-	public void setHeight(double height) {
+	public void setHeight(double height)
+	{
 		this.height = height;
 	}
 
-	public double getHeight() {
+	public double getHeight()
+	{
 		return height;
 	}
 
-	public void setSectionForDiagonalMembers(
-			HollowCircleS sectionForDiagonalMembers) {
+	public void setSectionForDiagonalMembers(HollowCircleS sectionForDiagonalMembers)
+	{
 		this.sectionForDiagonalMembers = sectionForDiagonalMembers;
 	}
 
-	public HollowCircleS getSectionForDiagonalMembers() {
+	public HollowCircleS getSectionForDiagonalMembers()
+	{
 		return sectionForDiagonalMembers;
 	}
 
-	public void setSectionForLowerMembers(HollowCircleS sectionForLowerMembers) {
+	public void setSectionForLowerMembers(HollowCircleS sectionForLowerMembers)
+	{
 		this.sectionForLowerMembers = sectionForLowerMembers;
 	}
 
-	public HollowCircleS getSectionForLowerMembers() {
+	public HollowCircleS getSectionForLowerMembers()
+	{
 		return sectionForLowerMembers;
 	}
 
-	public void setSectionForUpperMembers(HollowCircleS sectionForUpperMembers) {
+	public void setSectionForUpperMembers(HollowCircleS sectionForUpperMembers)
+	{
 		this.sectionForUpperMembers = sectionForUpperMembers;
 	}
 
-	public HollowCircleS getSectionForUpperMembers() {
+	public HollowCircleS getSectionForUpperMembers()
+	{
 		return sectionForUpperMembers;
 	}
 }

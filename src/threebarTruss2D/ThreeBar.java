@@ -12,11 +12,12 @@ import inf.minife.view2.Viewer2;
  * @author kl Create a three bar structure similar to the ANSYS problem...
  */
 
-public class ThreeBar {
-
+public class ThreeBar
+{
 	private Model model;
 
-	public static void main(String[] args) {
+	public static void main(String[] args)
+	{
 		Model m = new ThreeBar().getModel();
 
 		m.printStructure();
@@ -27,8 +28,8 @@ public class ThreeBar {
 		viewer.setVisible(true);
 	}
 
-	public ThreeBar() {
-
+	public ThreeBar()
+	{
 		// model
 		model = new Model();
 
@@ -36,7 +37,8 @@ public class ThreeBar {
 		double rho = 7.88E-6; // kg/mm^2 (density of steel)
 		model.createMaterial(1, E, rho);
 
-		for (int i = 1; i <= 3; i++) {
+		for (int i = 1; i <= 3; i++)
+		{
 			RectangleS r;
 			r = model.createSection(i, RectangleS.TYPE, Truss2D.TYPE);
 			r.setTKY(10); // mm
@@ -69,15 +71,16 @@ public class ThreeBar {
 		model.getNode(3).setConstraint(c);
 
 		// elements
-		model.createElement(1, Truss2D.TYPE, model.getMaterial(1),
-				model.getRealtable(1), model.getNode(1), model.getNode(4));
-		model.createElement(2, Truss2D.TYPE, model.getMaterial(1),
-				model.getRealtable(2), model.getNode(2), model.getNode(4));
-		model.createElement(3, Truss2D.TYPE, model.getMaterial(1),
-				model.getRealtable(3), model.getNode(3), model.getNode(4));
+		model.createElement(1, Truss2D.TYPE, model.getMaterial(1), model.getRealtable(1), model.getNode(1),
+				model.getNode(4));
+		model.createElement(2, Truss2D.TYPE, model.getMaterial(1), model.getRealtable(2), model.getNode(2),
+				model.getNode(4));
+		model.createElement(3, Truss2D.TYPE, model.getMaterial(1), model.getRealtable(3), model.getNode(3),
+				model.getNode(4));
 	}
 
-	public Model getModel() {
+	public Model getModel()
+	{
 		return model;
 	}
 }

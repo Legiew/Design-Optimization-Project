@@ -9,8 +9,8 @@ import org.mopack.sopti.problems.ProblemType1;
 import org.mopack.sopti.ui.swing.minife.ModelProvider;
 import org.mopack.sopti.ui.swing.minife.OptViewer;
 
-public class GirderOpt extends ProblemType1 implements ModelProvider {
-
+public class GirderOpt extends ProblemType1 implements ModelProvider
+{
 	Model model;
 	GirderStructure gs;
 
@@ -22,27 +22,28 @@ public class GirderOpt extends ProblemType1 implements ModelProvider {
 	double minDiameter = 0.01; // m
 	double maxDiameter = 0.3; // m
 
-	public static void main(String[] args) {
+	public static void main(String[] args)
+	{
 		new OptViewer(new GirderOpt()).setVisible(true);
 	}
 
-	public GirderOpt() {
+	public GirderOpt()
+	{
 		gs = new GirderStructure();
 		model = gs.getModel();
 
-		addDesignVariable("diameter for lower members [m^2]", minDiameter, gs
-				.getDiameter(), maxDiameter);
-		addDesignVariable("diameter for diagonal members [m^2]", minDiameter,
-				gs.getDiameter(), maxDiameter);
-		addDesignVariable("diameter for upper members [m^2]", minDiameter, gs
-				.getDiameter(), maxDiameter);
+		addDesignVariable("diameter for lower members [m^2]", minDiameter, gs.getDiameter(), maxDiameter);
+		addDesignVariable("diameter for diagonal members [m^2]", minDiameter, gs.getDiameter(), maxDiameter);
+		addDesignVariable("diameter for upper members [m^2]", minDiameter, gs.getDiameter(), maxDiameter);
 
 		addDesignVariable("height 1 [m]", minHeight, gs.getHeight(), maxHeight);
 		addDesignVariable("height 2 [m]", minHeight, gs.getHeight(), maxHeight);
 		addDesignVariable("height 3 [m]", minHeight, gs.getHeight(), maxHeight);
 
 		addFunctionName(0, "total mass [kg]");
-		for (int i = 0; i < countConstraints(); i++) {
+
+		for (int i = 0; i < countConstraints(); i++)
+		{
 			addFunctionName("member " + (i + 1));
 		}
 
@@ -50,10 +51,10 @@ public class GirderOpt extends ProblemType1 implements ModelProvider {
 		evaluate(getInitial());
 	}
 
-	public double[] evaluate(double[] x) {
-
+	public double[] evaluate(double[] x)
+	{
 		f = new double[1 + countConstraints()];
-		
+
 		gs.getSectionForLowerMembers().setDiameter(x[0]);
 		gs.getSectionForDiagonalMembers().setDiameter(x[1]);
 		gs.getSectionForUpperMembers().setDiameter(x[2]);
@@ -69,7 +70,9 @@ public class GirderOpt extends ProblemType1 implements ModelProvider {
 		f[0] = model.getTotalMass();
 
 		Element[] elements = model.getElements();
-		for (int i = 0; i < elements.length; i++) {
+
+		for (int i = 0; i < elements.length; i++)
+		{
 			double stress = elements[i].getResult(Truss2D.RS_STRESS);
 			f[i + 1] = Math.abs(stress) / maxStress - 1;
 		}
@@ -77,12 +80,14 @@ public class GirderOpt extends ProblemType1 implements ModelProvider {
 		return f;
 	}
 
-	public Model getModel() {
+	public Model getModel()
+	{
 		return model;
 	}
 
 	@Override
-	public int countConstraints() {
+	public int countConstraints()
+	{
 		return model.getElements().length;
 	}
 }

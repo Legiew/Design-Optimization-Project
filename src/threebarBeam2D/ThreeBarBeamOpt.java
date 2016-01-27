@@ -15,17 +15,16 @@ import org.mopack.sopti.ui.swing.minife.OptViewer;
  * 
  *         Optimize a ThreeBar object.
  * 
- *         - optimization variables are
- *          - the support distance b and
- *          - the diameters of bars 1, 2 and 3 (assume round shape)
+ *         - optimization variables are - the support distance b and - the
+ *         diameters of bars 1, 2 and 3 (assume round shape)
  * 
  *         - the objective function is the total mass
  * 
  *         - constraints are stresses in each element
  * 
  */
-public class ThreeBarBeamOpt extends ProblemType1 implements ModelProvider {
-
+public class ThreeBarBeamOpt extends ProblemType1 implements ModelProvider
+{
 	// the array containing the object function f[0] and the constraint values
 	// f[1], f[2], ...
 	double[] f;
@@ -34,14 +33,15 @@ public class ThreeBarBeamOpt extends ProblemType1 implements ModelProvider {
 
 	Model model;
 
-	public static void main(String[] args) {
+	public static void main(String[] args)
+	{
 		new OptViewer(new ThreeBarBeamOpt()).setVisible(true);
 	}
 
 	// double bucklingCoefficient = 4;
 
-	public ThreeBarBeamOpt() {
-
+	public ThreeBarBeamOpt()
+	{
 		ThreeBarBeam threebar = new ThreeBarBeam();
 		model = threebar.getModel();
 
@@ -51,7 +51,9 @@ public class ThreeBarBeamOpt extends ProblemType1 implements ModelProvider {
 		addDesignVariable("diameter of bar #3 [mm]", 1, 10, 50);
 
 		addFunctionName(0, "total mass [kg]");
-		for (int i = 0; i < countConstraints(); i++) {
+		
+		for (int i = 0; i < countConstraints(); i++)
+		{
 			addFunctionName("stress member " + (i + 1));
 		}
 
@@ -59,21 +61,22 @@ public class ThreeBarBeamOpt extends ProblemType1 implements ModelProvider {
 		evaluate(getInitial());
 	}
 
-	void computeStressConstraints() {
-
+	void computeStressConstraints()
+	{
 		Element[] elements = model.getElements();
 		int n = elements.length;
 		double sigma;
 
-		for (int i = 0; i < n; i++) {
+		for (int i = 0; i < n; i++)
+		{
 			sigma = elements[i].getResult(Beam2D.RS_SEQV_I);
 			f[i + 1] = Math.abs(sigma) / sigmaMax - 1.0;
 		}
 	}
 
 	@Override
-	public double[] evaluate(double[] x) {
-
+	public double[] evaluate(double[] x)
+	{
 		f = new double[1 + countConstraints()];
 
 		// the support width
@@ -82,7 +85,8 @@ public class ThreeBarBeamOpt extends ProblemType1 implements ModelProvider {
 		model.getNode(1).setCoordinate(Node.X, -b);
 		model.getNode(3).setCoordinate(Node.X, b);
 
-		for (int i = 1; i <= 3; i++) {
+		for (int i = 1; i <= 3; i++)
+		{
 			CircleS c = (CircleS) model.getRealtable(i);
 			c.setDiameter(x[i]);
 		}
@@ -96,12 +100,14 @@ public class ThreeBarBeamOpt extends ProblemType1 implements ModelProvider {
 	}
 
 	@Override
-	public int countConstraints() {
+	public int countConstraints()
+	{
 		return model.getElements().length;
 	}
 
 	@Override
-	public Model getModel() {
+	public Model getModel()
+	{
 		return model;
 	}
 }
