@@ -4,11 +4,16 @@ import org.mopack.sopti.problems.ProblemType1;
 import org.mopack.sopti.ui.swing.minife.ModelProvider;
 import org.mopack.sopti.ui.swing.minife.OptViewer;
 
+import inf.minife.fe.Element;
 import inf.minife.fe.Model;
+import inf.minife.fe.Node;
+import inf.minife.fe.Truss2D;
 
 public class BridgeOpt extends ProblemType1 implements ModelProvider
 {
 	private BridgeStructure structure;
+	
+	double[] f;
 
 	public static void main(String[] args)
 	{
@@ -18,6 +23,18 @@ public class BridgeOpt extends ProblemType1 implements ModelProvider
 	public BridgeOpt()
 	{
 		this.structure = new BridgeStructure();
+		
+		double minDiameter = 0.01; // m
+		double maxDiameter = 0.3; // m
+		
+		addDesignVariable("diameter for lower members [m^2]", minDiameter, 0.15, maxDiameter);
+		
+		addFunctionName(0, "total mass [kg]");
+
+		for (int i = 0; i < countConstraints(); i++)
+		{
+			addFunctionName("member " + (i + 1));
+		}
 
 		evaluate(getInitial());
 	}
@@ -37,6 +54,24 @@ public class BridgeOpt extends ProblemType1 implements ModelProvider
 	@Override
 	public double[] evaluate(double[] x)
 	{
-		return null;
+		double maxStress = 240e3; // kN/m^2
+		
+		f = new double[1 + countConstraints()];
+
+		this.structure.getSection().setDiameter(x[0]);			
+
+		this.structure.getModel().solve();
+
+		f[0] = this.structure.getModel().getTotalMass();
+
+		Element[] elements = this.structure.getModel().getElements();
+
+		for (int i = 0; i < elements.length; i++)
+		{
+			double stress = elements[i].getResult(Truss2D.RS_STRESS);
+			f[i + 1] = Math.abs(stress) / maxStress - 1;
+		}
+
+		return f;
 	}
 }
