@@ -1,9 +1,12 @@
 package bridge;
 
+import inf.minife.fe.Constraint;
+import inf.minife.fe.DOF;
+import inf.minife.fe.Force;
 import inf.minife.fe.HollowCircleS;
 import inf.minife.fe.Material;
 import inf.minife.fe.Model;
-import inf.minife.fe.Truss2D;
+import inf.minife.fe.Node;
 import inf.minife.fe.Truss3D;
 import inf.minife.view2.Viewer2;
 
@@ -18,15 +21,18 @@ public class BridgeStructure
 	private final int back = 100000;
 	private final int crosswise = 10000;
 	private final int angular = 20000;
+	private final int topDown = 30000;
 
 	private double length = 20.0;
-	private int nodeCountLength = 20;
+	private int nodeCountLength = 15;
 	private double width = 5.0;
 	private double height = 3.0;
 
 	public BridgeStructure()
 	{
 		this.model = new Model();
+
+		this.model.getSettings().setAcceleration(DOF.T_Y, 9.81);
 
 		double eModulus = 210000e3; // kN/m^2
 		double rho = 7.850e6; // kg/m^3
@@ -48,12 +54,97 @@ public class BridgeStructure
 
 		createAngularEnd(height, bottom, middle, top, back, angular, material, section, nodeLengthDelta, width);
 
-		for (int i = 3; i < nodeCountLength - 4; i++)
+		createTopGrid(material, section, nodeLengthDelta);
+
+		createTopDown(material, section, nodeLengthDelta);
+		
+		for (int i = 2; i < nodeCountLength / 2; i++)
+		{
+			model.createElement(angular + front + i + middle, Truss3D.TYPE, material, section, model.getNode(bottom + front + i),
+					model.getNode(middle + front + i + 1));
+			
+			model.createElement(angular + front + i + top, Truss3D.TYPE, material, section, model.getNode(top + front + i),
+					model.getNode(middle + front + i + 1));
+			
+			model.createElement(angular + back + i + middle, Truss3D.TYPE, material, section, model.getNode(bottom + back + i),
+					model.getNode(middle + back + i + 1));
+			
+			model.createElement(angular + back + i + top, Truss3D.TYPE, material, section, model.getNode(top + back + i),
+					model.getNode(middle + back + i + 1));
+		}
+		
+		for (int i = nodeCountLength - 3; i > nodeCountLength / 2; i--)
+		{
+			model.createElement(angular + front + i + middle, Truss3D.TYPE, material, section, model.getNode(bottom + front + i),
+					model.getNode(middle + front + i - 1));
+			
+			model.createElement(angular + front + i + top, Truss3D.TYPE, material, section, model.getNode(top + front + i),
+					model.getNode(middle + front + i - 1));
+			
+			model.createElement(angular + back + i + middle, Truss3D.TYPE, material, section, model.getNode(bottom + back + i),
+					model.getNode(middle + back + i - 1));
+			
+			model.createElement(angular + back + i + top, Truss3D.TYPE, material, section, model.getNode(top + back + i),
+					model.getNode(middle + back + i - 1));
+		}
+
+		setConstraints();
+
+		setForce();
+	}
+
+	private void createTopDown(Material material, HollowCircleS section, double nodeLengthDelta)
+	{
+		for (int i = 3; i < nodeCountLength - 3; i++)
+		{
+			this.model.createNode(middle + front + i, nodeLengthDelta * i, height / 2.0, 0);
+			this.model.createNode(middle + back + i, nodeLengthDelta * i, height / 2.0, width);
+
+			model.createElement(topDown + front + i + middle, Truss3D.TYPE, material, section, model.getNode(bottom + front + i),
+					model.getNode(middle + front + i));
+			
+			model.createElement(topDown + front + i + top, Truss3D.TYPE, material, section, model.getNode(top + front + i),
+					model.getNode(middle + front + i));
+			
+			model.createElement(topDown + back + i + middle, Truss3D.TYPE, material, section, model.getNode(bottom + back + i),
+					model.getNode(middle + back + i));
+			
+			model.createElement(topDown + back + i + top, Truss3D.TYPE, material, section, model.getNode(top + back + i),
+					model.getNode(middle + back + i));
+		}
+	}
+
+	private void setForce()
+	{
+		Force force = new Force();
+		force.setValue(DOF.T_Y, -500 * 9.81);
+
+		Node forceNode = model.getNode(front + bottom + (nodeCountLength / 2));
+		forceNode.setForce(force);
+	}
+
+	private void setConstraints()
+	{
+		Constraint constraint = new Constraint();
+		constraint.setFree(DOF.R_X, false);
+		constraint.setFree(DOF.R_Y, false);
+		constraint.setFree(DOF.R_Z, false);
+		constraint.setFree(DOF.T_X, false);
+		constraint.setFree(DOF.T_Y, false);
+		constraint.setFree(DOF.T_Z, false);
+
+		this.model.getNode(bottom + front).setConstraint(constraint);
+		this.model.getNode(bottom + back).setConstraint(constraint);
+		this.model.getNode(bottom + front + nodeCountLength - 1).setConstraint(constraint);
+		this.model.getNode(bottom + back + nodeCountLength - 1).setConstraint(constraint);
+	}
+
+	private void createTopGrid(Material material, HollowCircleS section, double nodeLengthDelta)
+	{
+		for (int i = 3; i < nodeCountLength - 3; i++)
 		{
 			this.model.createNode(top + front + i, nodeLengthDelta * i, height, 0);
 			this.model.createNode(top + back + i, nodeLengthDelta * i, height, width);
-			this.model.createNode(middle + front + i, nodeLengthDelta * i, height / 2.0, 0);
-			this.model.createNode(middle + back + i, nodeLengthDelta * i, height / 2.0, width);
 		}
 
 		for (int i = 2; i < nodeCountLength - 3; i++)
@@ -63,6 +154,12 @@ public class BridgeStructure
 
 			model.createElement(top + back + i, Truss3D.TYPE, material, section, model.getNode(top + back + i),
 					model.getNode(top + back + i + 1));
+		}
+
+		for (int i = 2; i < nodeCountLength - 2; i++)
+		{
+			model.createElement(top + crosswise + i, Truss3D.TYPE, material, section, model.getNode(top + front + i),
+					model.getNode(top + back + i));
 		}
 	}
 
