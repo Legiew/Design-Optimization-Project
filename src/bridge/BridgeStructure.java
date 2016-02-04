@@ -8,7 +8,6 @@ import inf.minife.fe.HollowCircleS;
 import inf.minife.fe.Material;
 import inf.minife.fe.Model;
 import inf.minife.fe.Node;
-import inf.minife.fe.Beam3D;
 import inf.minife.view2.Viewer2;
 
 public class BridgeStructure
@@ -19,17 +18,19 @@ public class BridgeStructure
 	private final int middle = 1000000;
 	private final int top = 2000000;
 	private final int front = 0;
-	private final int back = 100000;
+	private final int center = 100000;
+	private final int back = 200000;
 	private final int crosswise = 10000;
 	private final int angular = 20000;
 	private final int topDown = 30000;
 
 	private double length = 20.0;
-	private int nodeCountLength = 11;
+	private int nodeCountLength = 17;
 	private double width = 7.0;
 	private double height = 4.0;
-	
-	private HollowCircleS section;
+
+	private HollowCircleS sectionNormal;
+	private HollowCircleS sectionAngular;
 
 	public BridgeStructure()
 	{
@@ -37,58 +38,63 @@ public class BridgeStructure
 
 		this.model.getSettings().setAcceleration(DOF.T_Y, 9.81);
 
-		double eModulus = 210000e3; // kN/m^2
-		double rho = 7.850e6; // kg/m^3
+		double eModulus = 21000000.0; // kN/m^2
+		double rho = 7850.0; // kg/m^3
 		Material material = model.createMaterial(1, eModulus, rho);
 
-		section = model.createSection(1, HollowCircleS.TYPE, Beam3D.TYPE);
-		section.setDiameter(0.15);
-		section.setWTK(0.002);
+		sectionNormal = model.createSection(1, HollowCircleS.TYPE, Beam3D.TYPE);
+		sectionNormal.setDiameter(0.15);
+		sectionNormal.setWTK(0.002);
+
+		sectionAngular = model.createSection(2, HollowCircleS.TYPE, Beam3D.TYPE);
+		sectionAngular.setDiameter(0.05);
+		sectionAngular.setWTK(0.002);
 
 		double nodeLengthDelta = length / (nodeCountLength - 1.0);
 
-		createBottomGrid(nodeCountLength, width, bottom, front, back, crosswise, material, section, nodeLengthDelta);
+		createBottomGrid(nodeCountLength, width, bottom, front, back, crosswise, material, sectionNormal,
+				nodeLengthDelta);
 
-		createAngularStart(height, bottom, middle, top, front, angular, material, section, nodeLengthDelta, 0);
+		createAngularStart(height, bottom, middle, top, front, angular, material, sectionNormal, nodeLengthDelta, 0);
 
-		createAngularStart(height, bottom, middle, top, back, angular, material, section, nodeLengthDelta, width);
+		createAngularStart(height, bottom, middle, top, back, angular, material, sectionNormal, nodeLengthDelta, width);
 
-		createAngularEnd(height, bottom, middle, top, front, angular, material, section, nodeLengthDelta, 0);
+		createAngularEnd(height, bottom, middle, top, front, angular, material, sectionNormal, nodeLengthDelta, 0);
 
-		createAngularEnd(height, bottom, middle, top, back, angular, material, section, nodeLengthDelta, width);
+		createAngularEnd(height, bottom, middle, top, back, angular, material, sectionNormal, nodeLengthDelta, width);
 
-		createTopGrid(material, section, nodeLengthDelta);
+		createTopGrid(material, sectionNormal, nodeLengthDelta);
 
-		createTopDown(material, section, nodeLengthDelta);
-		
+		createTopDown(material, sectionNormal, nodeLengthDelta);
+
 		for (int i = 2; i < nodeCountLength / 2; i++)
 		{
-			model.createElement(angular + front + i + middle, Beam3D.TYPE, material, section, model.getNode(bottom + front + i),
-					model.getNode(middle + front + i + 1));
-			
-			model.createElement(angular + front + i + top, Beam3D.TYPE, material, section, model.getNode(top + front + i),
-					model.getNode(middle + front + i + 1));
-			
-			model.createElement(angular + back + i + middle, Beam3D.TYPE, material, section, model.getNode(bottom + back + i),
-					model.getNode(middle + back + i + 1));
-			
-			model.createElement(angular + back + i + top, Beam3D.TYPE, material, section, model.getNode(top + back + i),
-					model.getNode(middle + back + i + 1));
+			model.createElement(angular + front + i + middle, Beam3D.TYPE, material, sectionAngular,
+					model.getNode(bottom + front + i), model.getNode(middle + front + i + 1));
+
+			model.createElement(angular + front + i + top, Beam3D.TYPE, material, sectionAngular,
+					model.getNode(top + front + i), model.getNode(middle + front + i + 1));
+
+			model.createElement(angular + back + i + middle, Beam3D.TYPE, material, sectionAngular,
+					model.getNode(bottom + back + i), model.getNode(middle + back + i + 1));
+
+			model.createElement(angular + back + i + top, Beam3D.TYPE, material, sectionAngular,
+					model.getNode(top + back + i), model.getNode(middle + back + i + 1));
 		}
-		
+
 		for (int i = nodeCountLength - 3; i > nodeCountLength / 2; i--)
 		{
-			model.createElement(angular + front + i + middle, Beam3D.TYPE, material, section, model.getNode(bottom + front + i),
-					model.getNode(middle + front + i - 1));
-			
-			model.createElement(angular + front + i + top, Beam3D.TYPE, material, section, model.getNode(top + front + i),
-					model.getNode(middle + front + i - 1));
-			
-			model.createElement(angular + back + i + middle, Beam3D.TYPE, material, section, model.getNode(bottom + back + i),
-					model.getNode(middle + back + i - 1));
-			
-			model.createElement(angular + back + i + top, Beam3D.TYPE, material, section, model.getNode(top + back + i),
-					model.getNode(middle + back + i - 1));
+			model.createElement(angular + front + i + middle, Beam3D.TYPE, material, sectionAngular,
+					model.getNode(bottom + front + i), model.getNode(middle + front + i - 1));
+
+			model.createElement(angular + front + i + top, Beam3D.TYPE, material, sectionAngular,
+					model.getNode(top + front + i), model.getNode(middle + front + i - 1));
+
+			model.createElement(angular + back + i + middle, Beam3D.TYPE, material, sectionAngular,
+					model.getNode(bottom + back + i), model.getNode(middle + back + i - 1));
+
+			model.createElement(angular + back + i + top, Beam3D.TYPE, material, sectionAngular,
+					model.getNode(top + back + i), model.getNode(middle + back + i - 1));
 		}
 
 		setConstraints();
@@ -103,15 +109,15 @@ public class BridgeStructure
 			this.model.createNode(middle + front + i, nodeLengthDelta * i, height / 2.0, 0);
 			this.model.createNode(middle + back + i, nodeLengthDelta * i, height / 2.0, width);
 
-			model.createElement(topDown + front + i + middle, Beam3D.TYPE, material, section, model.getNode(bottom + front + i),
-					model.getNode(middle + front + i));
-			
-			model.createElement(topDown + front + i + top, Beam3D.TYPE, material, section, model.getNode(top + front + i),
-					model.getNode(middle + front + i));
-			
-			model.createElement(topDown + back + i + middle, Beam3D.TYPE, material, section, model.getNode(bottom + back + i),
-					model.getNode(middle + back + i));
-			
+			model.createElement(topDown + front + i + middle, Beam3D.TYPE, material, section,
+					model.getNode(bottom + front + i), model.getNode(middle + front + i));
+
+			model.createElement(topDown + front + i + top, Beam3D.TYPE, material, section,
+					model.getNode(top + front + i), model.getNode(middle + front + i));
+
+			model.createElement(topDown + back + i + middle, Beam3D.TYPE, material, section,
+					model.getNode(bottom + back + i), model.getNode(middle + back + i));
+
 			model.createElement(topDown + back + i + top, Beam3D.TYPE, material, section, model.getNode(top + back + i),
 					model.getNode(middle + back + i));
 		}
@@ -120,10 +126,16 @@ public class BridgeStructure
 	private void setForce()
 	{
 		Force force = new Force();
-		force.setValue(DOF.T_Y, -500000000 * 9.81);
+		force.setValue(DOF.T_Y, -1000.0 / 3.0);
 
-		Node forceNode = model.getNode(front + bottom + (nodeCountLength / 2));
-		forceNode.setForce(force);
+		Node forceNode1 = model.getNode(bottom + center + (nodeCountLength / 2));
+		forceNode1.setForce(force);
+
+		Node forceNode2 = model.getNode(center + bottom + (nodeCountLength / 2) - 3);
+		forceNode2.setForce(force);
+
+		Node forceNode3 = model.getNode(center + bottom + (nodeCountLength / 2) + 3);
+		forceNode3.setForce(force);
 	}
 
 	private void setConstraints()
@@ -159,11 +171,12 @@ public class BridgeStructure
 					model.getNode(top + back + i + 1));
 		}
 
-		for (int i = 2; i < nodeCountLength - 2; i++)
-		{
-			model.createElement(top + crosswise + i, Beam3D.TYPE, material, section, model.getNode(top + front + i),
-					model.getNode(top + back + i));
-		}
+		// for (int i = 2; i < nodeCountLength - 2; i++)
+		// {
+		// model.createElement(top + crosswise + i, Beam3D.TYPE, material,
+		// section, model.getNode(top + front + i),
+		// model.getNode(top + back + i));
+		// }
 	}
 
 	private void createAngularStart(double height, final int bottom, final int middle, final int top, final int zLayer,
@@ -223,6 +236,7 @@ public class BridgeStructure
 		for (int i = 0; i < nodeCountLength; i++)
 		{
 			this.model.createNode(bottom + front + i, nodeLengthDelta * i, 0, 0);
+			this.model.createNode(bottom + center + i, nodeLengthDelta * i, 0, width / 2.0);
 			this.model.createNode(bottom + back + i, nodeLengthDelta * i, 0, width);
 		}
 
@@ -238,7 +252,10 @@ public class BridgeStructure
 		for (int i = 0; i < nodeCountLength; i++)
 		{
 			model.createElement(bottom + crosswise + i, Beam3D.TYPE, material, section,
-					model.getNode(bottom + front + i), model.getNode(bottom + back + i));
+					model.getNode(bottom + front + i), model.getNode(bottom + center + i));
+
+			model.createElement(bottom + crosswise + center + i, Beam3D.TYPE, material, section,
+					model.getNode(bottom + center + i), model.getNode(bottom + back + i));
 		}
 	}
 
@@ -253,9 +270,14 @@ public class BridgeStructure
 	{
 		return model;
 	}
-	
-	public HollowCircleS getSection()
+
+	public HollowCircleS getNormalSection()
 	{
-		return this.section;
+		return this.sectionNormal;
+	}
+
+	public HollowCircleS getAngularSection()
+	{
+		return this.sectionAngular;
 	}
 }
