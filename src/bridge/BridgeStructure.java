@@ -25,7 +25,7 @@ public class BridgeStructure
 	private final int topDown = 30000;
 
 	private double length = 20.0;
-	private int nodeCountLength = 17;
+	private int nodeCountLength = 13;
 	private double width = 7.0;
 	private double height = 4.0;
 
@@ -38,17 +38,19 @@ public class BridgeStructure
 
 		this.model.getSettings().setAcceleration(DOF.T_Y, 9.81);
 
-		double eModulus = 21000000.0; // kN/m^2
-		double rho = 7850.0; // kg/m^3
+		double eModulus = 2.15e8; // kN/m^2
+		double rho = 7865.0; // kg/m^3
+		
 		Material material = model.createMaterial(1, eModulus, rho);
+		material.setNu(0.3);
 
 		sectionNormal = model.createSection(1, HollowCircleS.TYPE, Beam3D.TYPE);
 		sectionNormal.setDiameter(0.15);
-		sectionNormal.setWTK(0.002);
+		sectionNormal.setWTK(0.005);
 
 		sectionAngular = model.createSection(2, HollowCircleS.TYPE, Beam3D.TYPE);
 		sectionAngular.setDiameter(0.05);
-		sectionAngular.setWTK(0.002);
+		sectionAngular.setWTK(0.005);
 
 		double nodeLengthDelta = length / (nodeCountLength - 1.0);
 
@@ -126,7 +128,7 @@ public class BridgeStructure
 	private void setForce()
 	{
 		Force force = new Force();
-		force.setValue(DOF.T_Y, -1000.0 / 3.0);
+		force.setValue(DOF.T_Y, -4412.0 / 3.0);
 
 		Node forceNode1 = model.getNode(bottom + center + (nodeCountLength / 2));
 		forceNode1.setForce(force);
@@ -149,8 +151,11 @@ public class BridgeStructure
 		constraint.setFree(DOF.T_Z, false);
 
 		this.model.getNode(bottom + front).setConstraint(constraint);
+		this.model.getNode(bottom + center).setConstraint(constraint);
 		this.model.getNode(bottom + back).setConstraint(constraint);
+
 		this.model.getNode(bottom + front + nodeCountLength - 1).setConstraint(constraint);
+		this.model.getNode(bottom + center + nodeCountLength - 1).setConstraint(constraint);
 		this.model.getNode(bottom + back + nodeCountLength - 1).setConstraint(constraint);
 	}
 

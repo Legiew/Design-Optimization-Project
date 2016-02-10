@@ -23,11 +23,11 @@ public class BridgeOpt extends ProblemType1 implements ModelProvider
 	{
 		this.structure = new BridgeStructure();
 
-		double minDiameter = 0.01; // m
+		double minDiameter = 0.1; // m
 		double maxDiameter = 0.5; // m
 
 		addDesignVariable("diameter for normal beams [m]", minDiameter, 0.15, maxDiameter);
-		addDesignVariable("diameter for angular beams [m]", minDiameter, 0.05, maxDiameter);
+		addDesignVariable("diameter for angular beams [m]", minDiameter, 0.15, maxDiameter);
 
 		addFunctionName(0, "total mass [kg]");
 
@@ -54,7 +54,7 @@ public class BridgeOpt extends ProblemType1 implements ModelProvider
 	@Override
 	public double[] evaluate(double[] x)
 	{
-		double maxStress = 400000; // kN/m^2
+		double maxStress = 10e6; // kN/m^2
 
 		f = new double[1 + countConstraints()];
 
@@ -69,7 +69,7 @@ public class BridgeOpt extends ProblemType1 implements ModelProvider
 
 		for (int i = 0; i < elements.length; i++)
 		{
-			double stress = elements[i].getResult(Math.max(Beam3D.RS_SMAX_I, Beam3D.RS_SMAX_J));
+			double stress = elements[i].getResult(Beam3D.RS_SMAX_I);
 			f[i + 1] = (Math.abs(stress) / maxStress) - 1.0;
 		}
 
