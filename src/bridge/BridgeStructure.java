@@ -12,8 +12,14 @@ import inf.minife.view2.Viewer2;
 
 public class BridgeStructure
 {
-	private Model model;
+	public static void main(String[] args)
+	{
+		final BridgeStructure structure = new BridgeStructure();
+		final Viewer2 viewer = new Viewer2(structure.getModel());
+		viewer.setVisible(true);
+	}
 
+	private final Model model;
 	private final int bottom = 0;
 	private final int middle = 1000000;
 	private final int top = 2000000;
@@ -24,13 +30,16 @@ public class BridgeStructure
 	private final int angular = 20000;
 	private final int topDown = 30000;
 
-	private double length = 20.0;
-	private int nodeCountLength = 13;
-	private double width = 7.0;
-	private double height = 4.0;
+	private final double length = 20.0;
+	private final int nodeCountLength = 13;
+	private final double width = 7.0;
+	private final double height = 4.0;
 
-	private HollowCircleS sectionNormal;
-	private HollowCircleS sectionAngular;
+	private final double nodeLengthDelta;
+
+	private final Material material;
+	private final HollowCircleS sectionNormal;
+	private final HollowCircleS sectionAngular;
 
 	public BridgeStructure()
 	{
@@ -38,242 +47,226 @@ public class BridgeStructure
 
 		this.model.getSettings().setAcceleration(DOF.T_Y, 9.81);
 
-		double eModulus = 2.15e8; // kN/m^2
-		double rho = 7865.0; // kg/m^3
-		
-		Material material = model.createMaterial(1, eModulus, rho);
-		material.setNu(0.3);
+		final double eModulus = 2.15e8; // kN/m^2
+		final double rho = 7865.0; // kg/m^3
 
-		sectionNormal = model.createSection(1, HollowCircleS.TYPE, Beam3D.TYPE);
-		sectionNormal.setDiameter(0.15);
-		sectionNormal.setWTK(0.005);
+		this.material = this.model.createMaterial(1, eModulus, rho);
+		this.material.setNu(0.3);
 
-		sectionAngular = model.createSection(2, HollowCircleS.TYPE, Beam3D.TYPE);
-		sectionAngular.setDiameter(0.05);
-		sectionAngular.setWTK(0.005);
+		this.sectionNormal = this.model.createSection(1, HollowCircleS.TYPE, Beam3D.TYPE);
+		this.sectionNormal.setDiameter(0.15);
+		this.sectionNormal.setWTK(0.005);
 
-		double nodeLengthDelta = length / (nodeCountLength - 1.0);
+		this.sectionAngular = this.model.createSection(2, HollowCircleS.TYPE, Beam3D.TYPE);
+		this.sectionAngular.setDiameter(0.05);
+		this.sectionAngular.setWTK(0.005);
 
-		createBottomGrid(nodeCountLength, width, bottom, front, back, crosswise, material, sectionNormal,
-				nodeLengthDelta);
+		this.nodeLengthDelta = this.length / (this.nodeCountLength - 1.0);
 
-		createAngularStart(height, bottom, middle, top, front, angular, material, sectionNormal, nodeLengthDelta, 0);
+		this.createBottomGrid();
 
-		createAngularStart(height, bottom, middle, top, back, angular, material, sectionNormal, nodeLengthDelta, width);
+		this.createAngularStart(this.front, 0.0);
 
-		createAngularEnd(height, bottom, middle, top, front, angular, material, sectionNormal, nodeLengthDelta, 0);
+		this.createAngularStart(this.back, this.width);
 
-		createAngularEnd(height, bottom, middle, top, back, angular, material, sectionNormal, nodeLengthDelta, width);
+		this.createAngularEnd(this.front, 0.0);
 
-		createTopGrid(material, sectionNormal, nodeLengthDelta);
+		this.createAngularEnd(this.back, this.width);
 
-		createTopDown(material, sectionNormal, nodeLengthDelta);
+		this.createTopGrid();
 
-		for (int i = 2; i < nodeCountLength / 2; i++)
-		{
-			model.createElement(angular + front + i + middle, Beam3D.TYPE, material, sectionAngular,
-					model.getNode(bottom + front + i), model.getNode(middle + front + i + 1));
+		this.createTopDown();
 
-			model.createElement(angular + front + i + top, Beam3D.TYPE, material, sectionAngular,
-					model.getNode(top + front + i), model.getNode(middle + front + i + 1));
+		this.createAngularBeams();
 
-			model.createElement(angular + back + i + middle, Beam3D.TYPE, material, sectionAngular,
-					model.getNode(bottom + back + i), model.getNode(middle + back + i + 1));
+		this.setConstraints();
 
-			model.createElement(angular + back + i + top, Beam3D.TYPE, material, sectionAngular,
-					model.getNode(top + back + i), model.getNode(middle + back + i + 1));
-		}
-
-		for (int i = nodeCountLength - 3; i > nodeCountLength / 2; i--)
-		{
-			model.createElement(angular + front + i + middle, Beam3D.TYPE, material, sectionAngular,
-					model.getNode(bottom + front + i), model.getNode(middle + front + i - 1));
-
-			model.createElement(angular + front + i + top, Beam3D.TYPE, material, sectionAngular,
-					model.getNode(top + front + i), model.getNode(middle + front + i - 1));
-
-			model.createElement(angular + back + i + middle, Beam3D.TYPE, material, sectionAngular,
-					model.getNode(bottom + back + i), model.getNode(middle + back + i - 1));
-
-			model.createElement(angular + back + i + top, Beam3D.TYPE, material, sectionAngular,
-					model.getNode(top + back + i), model.getNode(middle + back + i - 1));
-		}
-
-		setConstraints();
-
-		setForce();
+		this.setForce();
 	}
 
-	private void createTopDown(Material material, HollowCircleS section, double nodeLengthDelta)
+	private void createAngularBeams()
 	{
-		for (int i = 3; i < nodeCountLength - 3; i++)
+		for (int i = 2; i < this.nodeCountLength / 2; i++)
 		{
-			this.model.createNode(middle + front + i, nodeLengthDelta * i, height / 2.0, 0);
-			this.model.createNode(middle + back + i, nodeLengthDelta * i, height / 2.0, width);
+			this.model.createElement(this.angular + this.front + i + this.middle, Beam3D.TYPE, this.material,
+					this.sectionAngular, this.model.getNode(this.bottom + this.front + i),
+					this.model.getNode(this.middle + this.front + i + 1));
 
-			model.createElement(topDown + front + i + middle, Beam3D.TYPE, material, section,
-					model.getNode(bottom + front + i), model.getNode(middle + front + i));
+			this.model.createElement(this.angular + this.front + i + this.top, Beam3D.TYPE, this.material,
+					this.sectionAngular, this.model.getNode(this.top + this.front + i),
+					this.model.getNode(this.middle + this.front + i + 1));
 
-			model.createElement(topDown + front + i + top, Beam3D.TYPE, material, section,
-					model.getNode(top + front + i), model.getNode(middle + front + i));
+			this.model.createElement(this.angular + this.back + i + this.middle, Beam3D.TYPE, this.material,
+					this.sectionAngular, this.model.getNode(this.bottom + this.back + i),
+					this.model.getNode(this.middle + this.back + i + 1));
 
-			model.createElement(topDown + back + i + middle, Beam3D.TYPE, material, section,
-					model.getNode(bottom + back + i), model.getNode(middle + back + i));
+			this.model.createElement(this.angular + this.back + i + this.top, Beam3D.TYPE, this.material,
+					this.sectionAngular, this.model.getNode(this.top + this.back + i),
+					this.model.getNode(this.middle + this.back + i + 1));
+		}
 
-			model.createElement(topDown + back + i + top, Beam3D.TYPE, material, section, model.getNode(top + back + i),
-					model.getNode(middle + back + i));
+		for (int i = this.nodeCountLength - 3; i > this.nodeCountLength / 2; i--)
+		{
+			this.model.createElement(this.angular + this.front + i + this.middle, Beam3D.TYPE, this.material,
+					this.sectionAngular, this.model.getNode(this.bottom + this.front + i),
+					this.model.getNode(this.middle + this.front + i - 1));
+
+			this.model.createElement(this.angular + this.front + i + this.top, Beam3D.TYPE, this.material,
+					this.sectionAngular, this.model.getNode(this.top + this.front + i),
+					this.model.getNode(this.middle + this.front + i - 1));
+
+			this.model.createElement(this.angular + this.back + i + this.middle, Beam3D.TYPE, this.material,
+					this.sectionAngular, this.model.getNode(this.bottom + this.back + i),
+					this.model.getNode(this.middle + this.back + i - 1));
+
+			this.model.createElement(this.angular + this.back + i + this.top, Beam3D.TYPE, this.material,
+					this.sectionAngular, this.model.getNode(this.top + this.back + i),
+					this.model.getNode(this.middle + this.back + i - 1));
 		}
 	}
 
-	private void setForce()
+	private void createAngularEnd(final int zLayer, double widthPosition)
 	{
-		Force force = new Force();
-		force.setValue(DOF.T_Y, -4412.0 / 3.0);
+		final int firstNode = this.middle + zLayer + this.nodeCountLength - 2;
+		final int secondNode = this.top + zLayer + this.nodeCountLength - 3;
 
-		Node forceNode1 = model.getNode(bottom + center + (nodeCountLength / 2));
-		forceNode1.setForce(force);
+		final int endIndex = (this.nodeCountLength - 4) * 6;
 
-		Node forceNode2 = model.getNode(center + bottom + (nodeCountLength / 2) - 3);
-		forceNode2.setForce(force);
+		this.model.createNode(firstNode, this.nodeLengthDelta * (this.nodeCountLength - 2), this.height / 2.0,
+				widthPosition);
 
-		Node forceNode3 = model.getNode(center + bottom + (nodeCountLength / 2) + 3);
-		forceNode3.setForce(force);
+		this.model.createNode(secondNode, this.nodeLengthDelta * (this.nodeCountLength - 3), this.height,
+				widthPosition);
+
+		this.model.createElement(this.bottom + zLayer + this.angular + endIndex, Beam3D.TYPE, this.material,
+				this.sectionNormal, this.model.getNode(this.bottom + zLayer + this.nodeCountLength - 1),
+				this.model.getNode(firstNode));
+
+		this.model.createElement(this.bottom + zLayer + this.angular + endIndex + 1, Beam3D.TYPE, this.material,
+				this.sectionNormal, this.model.getNode(firstNode), this.model.getNode(secondNode));
+
+		this.model.createElement(this.bottom + zLayer + this.angular + endIndex + 2, Beam3D.TYPE, this.material,
+				this.sectionNormal, this.model.getNode(this.bottom + zLayer + this.nodeCountLength - 2),
+				this.model.getNode(firstNode));
+
+		this.model.createElement(this.bottom + zLayer + this.angular + endIndex + 3, Beam3D.TYPE, this.material,
+				this.sectionNormal, this.model.getNode(secondNode),
+				this.model.getNode(this.bottom + zLayer + this.nodeCountLength - 3));
+
+		this.model.createElement(this.bottom + zLayer + this.angular + endIndex + 4, Beam3D.TYPE, this.material,
+				this.sectionNormal, this.model.getNode(firstNode),
+				this.model.getNode(this.bottom + zLayer + this.nodeCountLength - 3));
 	}
 
-	private void setConstraints()
+	private void createAngularStart(final int zLayer, double widthPosition)
 	{
-		Constraint constraint = new Constraint();
-		constraint.setFree(DOF.R_X, false);
-		constraint.setFree(DOF.R_Y, false);
-		constraint.setFree(DOF.R_Z, false);
-		constraint.setFree(DOF.T_X, false);
-		constraint.setFree(DOF.T_Y, false);
-		constraint.setFree(DOF.T_Z, false);
+		this.model.createNode(this.middle + zLayer + 1, this.nodeLengthDelta, this.height / 2.0, widthPosition);
 
-		this.model.getNode(bottom + front).setConstraint(constraint);
-		this.model.getNode(bottom + center).setConstraint(constraint);
-		this.model.getNode(bottom + back).setConstraint(constraint);
+		this.model.createNode(this.top + zLayer + 2, this.nodeLengthDelta * 2.0, this.height, widthPosition);
 
-		this.model.getNode(bottom + front + nodeCountLength - 1).setConstraint(constraint);
-		this.model.getNode(bottom + center + nodeCountLength - 1).setConstraint(constraint);
-		this.model.getNode(bottom + back + nodeCountLength - 1).setConstraint(constraint);
+		this.model.createElement(this.bottom + zLayer + this.angular, Beam3D.TYPE, this.material, this.sectionNormal,
+				this.model.getNode(this.bottom + zLayer), this.model.getNode(this.middle + zLayer + 1));
+
+		this.model.createElement(this.bottom + zLayer + this.angular + 1, Beam3D.TYPE, this.material,
+				this.sectionNormal, this.model.getNode(this.middle + zLayer + 1),
+				this.model.getNode(this.top + zLayer + 2));
+
+		this.model.createElement(this.bottom + zLayer + this.angular + 2, Beam3D.TYPE, this.material,
+				this.sectionNormal, this.model.getNode(this.bottom + zLayer + 1),
+				this.model.getNode(this.middle + zLayer + 1));
+
+		this.model.createElement(this.bottom + zLayer + this.angular + 3, Beam3D.TYPE, this.material,
+				this.sectionNormal, this.model.getNode(this.top + zLayer + 2),
+				this.model.getNode(this.bottom + zLayer + 2));
+
+		this.model.createElement(this.bottom + zLayer + this.angular + 4, Beam3D.TYPE, this.material,
+				this.sectionNormal, this.model.getNode(this.middle + zLayer + 1),
+				this.model.getNode(this.bottom + zLayer + 2));
 	}
 
-	private void createTopGrid(Material material, HollowCircleS section, double nodeLengthDelta)
+	private void createBottomGrid()
 	{
-		for (int i = 3; i < nodeCountLength - 3; i++)
+		for (int i = 0; i < this.nodeCountLength; i++)
 		{
-			this.model.createNode(top + front + i, nodeLengthDelta * i, height, 0);
-			this.model.createNode(top + back + i, nodeLengthDelta * i, height, width);
+			this.model.createNode(this.bottom + this.front + i, this.nodeLengthDelta * i, 0, 0);
+			this.model.createNode(this.bottom + this.center + i, this.nodeLengthDelta * i, 0, this.width / 2.0);
+			this.model.createNode(this.bottom + this.back + i, this.nodeLengthDelta * i, 0, this.width);
 		}
 
-		for (int i = 2; i < nodeCountLength - 3; i++)
+		for (int i = 0; i < this.nodeCountLength - 1; i++)
 		{
-			model.createElement(top + front + i, Beam3D.TYPE, material, section, model.getNode(top + front + i),
-					model.getNode(top + front + i + 1));
+			this.model.createElement(this.bottom + this.front + i, Beam3D.TYPE, this.material, this.sectionNormal,
+					this.model.getNode(this.bottom + this.front + i),
+					this.model.getNode(this.bottom + this.front + i + 1));
 
-			model.createElement(top + back + i, Beam3D.TYPE, material, section, model.getNode(top + back + i),
-					model.getNode(top + back + i + 1));
+			this.model.createElement(this.bottom + this.back + i, Beam3D.TYPE, this.material, this.sectionNormal,
+					this.model.getNode(this.bottom + this.back + i),
+					this.model.getNode(this.bottom + this.back + i + 1));
 		}
 
-		// for (int i = 2; i < nodeCountLength - 2; i++)
-		// {
-		// model.createElement(top + crosswise + i, Beam3D.TYPE, material,
-		// section, model.getNode(top + front + i),
-		// model.getNode(top + back + i));
-		// }
-	}
-
-	private void createAngularStart(double height, final int bottom, final int middle, final int top, final int zLayer,
-			final int angular, Material material, HollowCircleS section, double nodeLengthDelta, double width)
-	{
-		this.model.createNode(middle + zLayer + 1, nodeLengthDelta, height / 2.0, width);
-
-		this.model.createNode(top + zLayer + 2, nodeLengthDelta * 2.0, height, width);
-
-		model.createElement(bottom + zLayer + angular, Beam3D.TYPE, material, section, model.getNode(bottom + zLayer),
-				model.getNode(middle + zLayer + 1));
-
-		model.createElement(bottom + zLayer + angular + 1, Beam3D.TYPE, material, section,
-				model.getNode(middle + zLayer + 1), model.getNode(top + zLayer + 2));
-
-		model.createElement(bottom + zLayer + angular + 2, Beam3D.TYPE, material, section,
-				model.getNode(bottom + zLayer + 1), model.getNode(middle + zLayer + 1));
-
-		model.createElement(bottom + zLayer + angular + 3, Beam3D.TYPE, material, section,
-				model.getNode(top + zLayer + 2), model.getNode(bottom + zLayer + 2));
-
-		model.createElement(bottom + zLayer + angular + 4, Beam3D.TYPE, material, section,
-				model.getNode(middle + zLayer + 1), model.getNode(bottom + zLayer + 2));
-	}
-
-	private void createAngularEnd(double height, final int bottom, final int middle, final int top, final int zLayer,
-			final int angular, Material material, HollowCircleS section, double nodeLengthDelta, double width)
-	{
-		int firstNode = middle + zLayer + this.nodeCountLength - 2;
-		int secondNode = top + zLayer + this.nodeCountLength - 3;
-
-		int endIndex = (this.nodeCountLength - 4) * 6;
-
-		this.model.createNode(firstNode, nodeLengthDelta * (this.nodeCountLength - 2), height / 2.0, width);
-
-		this.model.createNode(secondNode, nodeLengthDelta * (this.nodeCountLength - 3), height, width);
-
-		model.createElement(bottom + zLayer + angular + endIndex, Beam3D.TYPE, material, section,
-				model.getNode(bottom + zLayer + this.nodeCountLength - 1), model.getNode(firstNode));
-
-		model.createElement(bottom + zLayer + angular + endIndex + 1, Beam3D.TYPE, material, section,
-				model.getNode(firstNode), model.getNode(secondNode));
-
-		model.createElement(bottom + zLayer + angular + endIndex + 2, Beam3D.TYPE, material, section,
-				model.getNode(bottom + zLayer + this.nodeCountLength - 2), model.getNode(firstNode));
-
-		model.createElement(bottom + zLayer + angular + endIndex + 3, Beam3D.TYPE, material, section,
-				model.getNode(secondNode), model.getNode(bottom + zLayer + this.nodeCountLength - 3));
-
-		model.createElement(bottom + zLayer + angular + endIndex + 4, Beam3D.TYPE, material, section,
-				model.getNode(firstNode), model.getNode(bottom + zLayer + this.nodeCountLength - 3));
-	}
-
-	private void createBottomGrid(int nodeCountLength, double width, final int bottom, final int front, final int back,
-			final int crosswise, Material material, HollowCircleS section, double nodeLengthDelta)
-	{
-		for (int i = 0; i < nodeCountLength; i++)
+		for (int i = 0; i < this.nodeCountLength; i++)
 		{
-			this.model.createNode(bottom + front + i, nodeLengthDelta * i, 0, 0);
-			this.model.createNode(bottom + center + i, nodeLengthDelta * i, 0, width / 2.0);
-			this.model.createNode(bottom + back + i, nodeLengthDelta * i, 0, width);
-		}
+			this.model.createElement(this.bottom + this.crosswise + i, Beam3D.TYPE, this.material, this.sectionNormal,
+					this.model.getNode(this.bottom + this.front + i),
+					this.model.getNode(this.bottom + this.center + i));
 
-		for (int i = 0; i < nodeCountLength - 1; i++)
-		{
-			model.createElement(bottom + front + i, Beam3D.TYPE, material, section, model.getNode(bottom + front + i),
-					model.getNode(bottom + front + i + 1));
-
-			model.createElement(bottom + back + i, Beam3D.TYPE, material, section, model.getNode(bottom + back + i),
-					model.getNode(bottom + back + i + 1));
-		}
-
-		for (int i = 0; i < nodeCountLength; i++)
-		{
-			model.createElement(bottom + crosswise + i, Beam3D.TYPE, material, section,
-					model.getNode(bottom + front + i), model.getNode(bottom + center + i));
-
-			model.createElement(bottom + crosswise + center + i, Beam3D.TYPE, material, section,
-					model.getNode(bottom + center + i), model.getNode(bottom + back + i));
+			this.model.createElement(this.bottom + this.crosswise + this.center + i, Beam3D.TYPE, this.material,
+					this.sectionNormal, this.model.getNode(this.bottom + this.center + i),
+					this.model.getNode(this.bottom + this.back + i));
 		}
 	}
 
-	public static void main(String[] args)
+	private void createTopDown()
 	{
-		BridgeStructure structure = new BridgeStructure();
-		Viewer2 viewer = new Viewer2(structure.getModel());
-		viewer.setVisible(true);
+		for (int i = 3; i < this.nodeCountLength - 3; i++)
+		{
+			this.model.createNode(this.middle + this.front + i, this.nodeLengthDelta * i, this.height / 2.0, 0);
+			this.model.createNode(this.middle + this.back + i, this.nodeLengthDelta * i, this.height / 2.0, this.width);
+
+			this.model.createElement(this.topDown + this.front + i + this.middle, Beam3D.TYPE, this.material,
+					this.sectionNormal, this.model.getNode(this.bottom + this.front + i),
+					this.model.getNode(this.middle + this.front + i));
+
+			this.model.createElement(this.topDown + this.front + i + this.top, Beam3D.TYPE, this.material,
+					this.sectionNormal, this.model.getNode(this.top + this.front + i),
+					this.model.getNode(this.middle + this.front + i));
+
+			this.model.createElement(this.topDown + this.back + i + this.middle, Beam3D.TYPE, this.material,
+					this.sectionNormal, this.model.getNode(this.bottom + this.back + i),
+					this.model.getNode(this.middle + this.back + i));
+
+			this.model.createElement(this.topDown + this.back + i + this.top, Beam3D.TYPE, this.material,
+					this.sectionNormal, this.model.getNode(this.top + this.back + i),
+					this.model.getNode(this.middle + this.back + i));
+		}
+	}
+
+	private void createTopGrid()
+	{
+		for (int i = 3; i < this.nodeCountLength - 3; i++)
+		{
+			this.model.createNode(this.top + this.front + i, this.nodeLengthDelta * i, this.height, 0);
+			this.model.createNode(this.top + this.back + i, this.nodeLengthDelta * i, this.height, this.width);
+		}
+
+		for (int i = 2; i < this.nodeCountLength - 3; i++)
+		{
+			this.model.createElement(this.top + this.front + i, Beam3D.TYPE, this.material, this.sectionNormal,
+					this.model.getNode(this.top + this.front + i), this.model.getNode(this.top + this.front + i + 1));
+
+			this.model.createElement(this.top + this.back + i, Beam3D.TYPE, this.material, this.sectionNormal,
+					this.model.getNode(this.top + this.back + i), this.model.getNode(this.top + this.back + i + 1));
+		}
+	}
+
+	public HollowCircleS getAngularSection()
+	{
+		return this.sectionAngular;
 	}
 
 	public Model getModel()
 	{
-		return model;
+		return this.model;
 	}
 
 	public HollowCircleS getNormalSection()
@@ -281,8 +274,37 @@ public class BridgeStructure
 		return this.sectionNormal;
 	}
 
-	public HollowCircleS getAngularSection()
+	private void setConstraints()
 	{
-		return this.sectionAngular;
+		final Constraint constraint = new Constraint();
+		constraint.setFree(DOF.R_X, false);
+		constraint.setFree(DOF.R_Y, false);
+		constraint.setFree(DOF.R_Z, false);
+		constraint.setFree(DOF.T_X, false);
+		constraint.setFree(DOF.T_Y, false);
+		constraint.setFree(DOF.T_Z, false);
+
+		this.model.getNode(this.bottom + this.front).setConstraint(constraint);
+		this.model.getNode(this.bottom + this.center).setConstraint(constraint);
+		this.model.getNode(this.bottom + this.back).setConstraint(constraint);
+
+		this.model.getNode(this.bottom + this.front + this.nodeCountLength - 1).setConstraint(constraint);
+		this.model.getNode(this.bottom + this.center + this.nodeCountLength - 1).setConstraint(constraint);
+		this.model.getNode(this.bottom + this.back + this.nodeCountLength - 1).setConstraint(constraint);
+	}
+
+	private void setForce()
+	{
+		final Force force = new Force();
+		force.setValue(DOF.T_Y, -4412.0 / 3.0);
+
+		final Node forceNode1 = this.model.getNode(this.bottom + this.center + (this.nodeCountLength / 2));
+		forceNode1.setForce(force);
+
+		final Node forceNode2 = this.model.getNode(this.center + this.bottom + (this.nodeCountLength / 2) - 3);
+		forceNode2.setForce(force);
+
+		final Node forceNode3 = this.model.getNode(this.center + this.bottom + (this.nodeCountLength / 2) + 3);
+		forceNode3.setForce(force);
 	}
 }
